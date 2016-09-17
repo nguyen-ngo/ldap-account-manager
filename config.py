@@ -1,0 +1,6 @@
+ldap_uri = ""
+basedn = ""
+user_basedn = ""
+group_basedn = ""
+binddn = ""
+bindpw = ""
