@@ -16,7 +16,7 @@ def main(lo, ao, go):
                 ao.print_info(userdata)
                 utils.WaitUser()
             else:
-                print('Account not found.')
+                print("Account not found.")
                 utils.WaitUser()
         elif choice == '2':
             email = raw_input('What email? ')
@@ -25,7 +25,7 @@ def main(lo, ao, go):
                 ao.print_info(userdata)
                 utils.WaitUser()
             else:
-                print('Account not found.')
+                print("Account not found.")
                 utils.WaitUser()
         elif choice == '3':
             group = raw_input('What group? ')
@@ -33,7 +33,7 @@ def main(lo, ao, go):
                 go.print_info(group)
                 utils.WaitUser()
             else:
-                print 'Group not found.'
+                print("Group not found.")
                 utils.WaitUser()
         elif choice == '4':
             group = raw_input('What group? ')
@@ -41,12 +41,9 @@ def main(lo, ao, go):
                 go.search_member(group)
                 utils.WaitUser()
             else:
-                print 'Group not found.'
+                print("Group not found.")
                 utils.WaitUser()
         elif choice == '5':
-            ao.add_to_ldap()
-            utils.WaitUser()
-        elif choice == '6':
             account = raw_input('What account? ')
             if lo.ldap_check_exist(account):
                 groups = raw_input('List of group? ')
@@ -54,42 +51,56 @@ def main(lo, ao, go):
                 ao.add_to_group(account, grouplist)
                 utils.WaitUser()
             else:
-                print 'Account not found.'
+                print("Account not found.")
                 utils.WaitUser()
-        elif choice == '7':
+        elif choice == '6':
             account = raw_input('What account? ')
             ao.remove_from_group(account)
             utils.WaitUser()
-        elif choice == '8':
+        elif choice == '7':
             account = raw_input('What account? ')
             if lo.ldap_check_exist(account):
                 ao.add_posix(account)
                 utils.WaitUser()
             else:
-                print 'Account not found.'
+                print("Account not found.")
                 utils.WaitUser()
-        elif choice == '9':
+        elif choice == '8':
             account = raw_input('What account? ')
             if lo.ldap_check_exist(account):
                 attribute = raw_input('What attribute? ')
                 ao.modify_attr(account, attribute)
                 utils.WaitUser()
             else:
-                print 'Account not found.'
+                print("Account not found.")
                 utils.WaitUser()
+        elif choice == '9':
+            ao.add_to_ldap()
+            utils.WaitUser()
         elif choice == '10':
+            go.add_to_ldap()
+            utils.WaitUser()
+        elif choice == '11':
             account = raw_input('Delete account? ')
             if lo.ldap_check_exist(account):
                 ao.remove_from_ldap(account)
                 utils.WaitUser()
             else:
-                print 'Account not found.'
+                print("Account not found.")
+                utils.WaitUser()
+        elif choice == '12':
+            group = raw_input('Delete group? ')
+            if lo.ldap_check_exist(group):
+                ao.remove_from_ldap(group)
+                utils.WaitUser()
+            else:
+                print("Group not found.")
                 utils.WaitUser()
         elif choice == '0':
-            print 'Bye bye.'
+            print("Bye bye.")
             exit()
         else:
-            print 'Invalid choice. Please try again.'
+            print("Invalid choice. Please try again.")
             utils.WaitUser()
 
 

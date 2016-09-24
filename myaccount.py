@@ -9,13 +9,17 @@ ld = MyLDAP()
 class MyAccount(object):
 	@classmethod
 	def add_to_ldap(cls):
+		"""
+		Add new user to LDAP
+		:return: Successfully or Error
+		"""
 		mod_list = {'objectClass': ['top', 'organizationalPerson', 'inetOrgPerson']}
 		while True:
-			username = raw_input('Username? ')
-			if ld.ldap_check_exist(username):
-				print 'Username existed. Try another one.'
+			uname = raw_input('Username? ')
+			if ld.ldap_check_exist(uname):
+				print("Username  %s existed. Try another name." % uname)
 			else:
-				mod_list['cn'] = username
+				mod_list['cn'] = uname
 				break
 
 		mod_list['givenName'] = raw_input('First Name? ')
@@ -31,22 +35,22 @@ class MyAccount(object):
 			prigroup = raw_input('Primary Group? ')
 			mod_list['gidNumber'] = gr.search_by_name(prigroup)[1]['gidNumber'][0]
 			mod_list['uidNumber'] = raw_input('uidNumber? ')
-			mod_list['homeDirectory'] = '/home/' + username
+			mod_list['homeDirectory'] = '/home/' + uname
 			mod_list['loginShell'] = '/bin/bash'
 			mod_list['sshPublicKey'] = str(raw_input('Publickey? '))
 		
 		"""
 		
-		TODO: try to determine new userdn here
+		TODO: determine user DN here
 		
 		"""
-		userdn = ''
-
+		
+		userdn = ""
 		try:
 			ld.ld.add_s(userdn, modlist.addModlist(mod_list))
 			if is_posix == 'y':
-				cls.add_to_group(username, [prigroup])
-			print('Added account successfully.')
+				cls.add_to_group(uname, [prigroup])
+			print("Added account %s successfully." % uname)
 		except Exception, e:
 			print(e)
 
@@ -78,7 +82,7 @@ class MyAccount(object):
 					ld.ld.modify_s(gdn, modlist.modifyModlist(oldlist, newlist))
 					print("Added account %s to group %s successfully." % (cn, group))
 				except Exception, e:
-					print (e)
+					print(e)
 			else:
 				print("Group %s not found." % group)
 
@@ -92,7 +96,7 @@ class MyAccount(object):
 		searchfilter = "(cn=%s)" % cn
 		result = ld.ldap_search(searchfilter)
 		if not result:
-			print 'Account not found.'
+			print("Account not found.")
 		else:
 			userdn = result[0][0][0]
 			oldlist = result[0][0][1]
@@ -100,6 +104,8 @@ class MyAccount(object):
 			if 'posixAccount' not in newlist['objectClass']:
 				if 'pwmEventLog' in newlist.keys():
 					del newlist['pwmEventLog']
+				if 'uid' not in newlist.keys():
+					newlist['uid'] = newlist['cn']
 				new_obj = list(newlist['objectClass'])
 				new_obj.append('posixAccount')
 				new_obj.append('ldapPublicKey')
@@ -114,7 +120,7 @@ class MyAccount(object):
 
 				try:
 					ld.ld.modify_s(userdn, modlist.modifyModlist(oldlist, newlist))
-					print 'Update account %s successfully' % cn
+					print("Update account %s successfully" % cn)
 					cls.add_to_group(cn, [prigroup])
 				except Exception, e:
 					print(e)
@@ -136,7 +142,7 @@ class MyAccount(object):
 		newattr = []
 		oldlist = {}
 		newlist = {}
-		print 'Old value of %s : %s' % (attr, oldattr[0])
+		print("Old value of %s : %s" % (attr, oldattr[0]))
 		na = raw_input('New value? ')
 		newattr.append(na)
 
@@ -144,7 +150,7 @@ class MyAccount(object):
 		newlist[attr] = newattr
 		try:
 			ld.ld.modify_s(userdn, modlist.modifyModlist(oldlist, newlist))
-			print 'Update attribute %s successfully' % attr
+			print("Update attribute %s successfully" % attr)
 		except Exception, e:
 			print(e)
 
@@ -223,7 +229,7 @@ class MyAccount(object):
 		searchfilter1 = "(&(objectClass=posixGroup)(memberUid=%s))" % cn
 		result1 = ld.ldap_search(searchfilter1)
 		if not result1:
-			print 'Account not belong to any group.'
+			print("Account not belong to any group.")
 			return None
 		else:
 			grouplist = []
@@ -242,7 +248,7 @@ class MyAccount(object):
 			newlist['memberUid'] = newmem
 			try:
 				ld.ld.modify_s(gdn, modlist.modifyModlist(oldlist, newlist))
-				print 'Remove %s from group %s successfully.' % (cn, g)
+				print("Remove %s from group %s successfully." % (cn, g))
 			except Exception, e:
 				print(e)
 
@@ -258,11 +264,11 @@ class MyAccount(object):
 		full_name = i['displayName'][0] if 'displayName' in i.keys() else None
 		email = i['mail'][0] if 'mail' in i.keys() else None
 
-		print 100 * '#'
-		print 'User information:\n'
-		print '\t- User    : %s' % infos[0]
-		print '\t- Fullname: %s' % full_name
-		print '\t- Email   : %s' % email
+		print(100 * '#')
+		print("User information:\n")
+		print("\t- User    : %s" % infos[0])
+		print("\t- Fullname: %s" % full_name)
+		print("\t- Email   : %s" % email)
 
 		is_posixAccount = True if 'posixAccount' in i['objectClass'] else False
 		if is_posixAccount:
@@ -273,13 +279,13 @@ class MyAccount(object):
 			groupname = gr.search_by_id(gid)[1]['cn'][0]
 			memberof = cls.search_membership(username)
 
-			print '\t+ Have posix account: %s' % is_posixAccount
-			print '\t- Username : %s' % username
-			print '\t- Uid      : %s' % uid
-			print '\t- Gid      : %s' % gid
-			print '\t- Primary Group: %s' % groupname
-			print '\t- Publickey: %s' % publickey
-			print '\t- Member of: %s' % memberof
+			print("\t+ Have posix account: %s" % is_posixAccount)
+			print("\t- Username : %s" % username)
+			print("\t- Uid      : %s" % uid)
+			print("\t- Gid      : %s" % gid)
+			print("\t- Primary Group: %s" % groupname)
+			print("\t- Publickey: %s" % publickey)
+			print("\t- Member of: %s" % memberof)
 
 			if memberof != None:
 				for g in memberof:

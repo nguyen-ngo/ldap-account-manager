@@ -1,2 +1,2 @@
 # ldap-account-manager
-Simple app to manage LDAP account
+Simple tool to manage LDAP account/group
