@@ -28,15 +28,21 @@ class MyLDAP(object):
         except ldap.LDAPError, e:
             return e
 
-    def ldap_search(self, searchfilter, basedn=config.basedn):
+    def ldap_search(self, searchfilter, basedn=config.basedn, searchscope='SUBTREE'):
         """
         Use for search
         :param searchfilter: LDAP filter format
         :param basedn: basedn to start search
         :return: search result
         """
+        if searchscope == 'ONELEVEL':
+            scope = ldap.SCOPE_ONELEVEL
+        elif searchscope == 'SUBTREE':
+            scope = ldap.SCOPE_SUBTREE
+        else:
+            scope = ldap.SCOPE_BASE
         try:
-            result = self.ld.search(basedn, ldap.SCOPE_SUBTREE, searchfilter, None)
+            result = self.ld.search(basedn, scope, searchfilter, None)
             result_set = []
             while True:
                 result_type, result_data = self.ld.result(result, 0)

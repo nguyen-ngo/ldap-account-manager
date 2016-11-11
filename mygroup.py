@@ -1,4 +1,5 @@
 import config
+import utils
 import ldap.modlist as modlist
 from myldap import MyLDAP
 
@@ -16,10 +17,12 @@ class MyGroup(object):
 			else:
 				mod_list['cn'] = gname
 				break
-		mod_list['gidNumber'] = raw_input('gidNumber? ')
+		mod_list['gidNumber'] = utils.GetMaxUidNumber()
+		print("gidNumber: %s" % mod_list['gidNumber'])
 		gdn = 'cn=' + gname + ',' + config.group_basedn
 		try:
 			ld.ld.add_s(gdn, modlist.addModlist(mod_list))
+			utils.IncreaseMaxUidNumber()
 			print("Added group %s successfully." % gname)
 		except Exception, e:
 			print(e)
@@ -44,6 +47,7 @@ class MyGroup(object):
 		:param gid: group's gidNumber
 		:return: dn (string) and group infos (dict)
 		"""
+		# searchfilter = "(&(objectClass=posixGroup)(gidNumber=%s))" % gid
 		searchfilter = "(gidNumber=%s)" % gid
 		result = ld.ldap_search(searchfilter, basedn=config.group_basedn)
 		if not result:
@@ -58,6 +62,7 @@ class MyGroup(object):
 		:param cn: name of group
 		:return: member of group
 		"""
+		# searchfilter1 = "(&(objectClass=posixGroup)(cn=%s))" % cn
 		searchfilter1 = "(cn=%s)" % cn
 		result1 = ld.ldap_search(searchfilter1, basedn=config.group_basedn)
 		if not result1:
@@ -65,6 +70,7 @@ class MyGroup(object):
 		else:
 			members = result1[0][0][1]['memberUid']
 			for mem in members:
+				# searchfilter2 = "(&(objectClass=inetOrgPerson)(cn=%s))" % mem
 				searchfilter2 = "(cn=%s)" % mem
 				result2 = ld.ldap_search(searchfilter2, basedn=config.user_basedn)
 				for data in result2:

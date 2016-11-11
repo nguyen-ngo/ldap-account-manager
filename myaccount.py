@@ -1,4 +1,5 @@
 import config
+import utils
 import ldap.modlist as modlist
 from myldap import MyLDAP
 from mygroup import MyGroup as gr
@@ -27,6 +28,8 @@ class MyAccount(object):
 		mod_list['displayName'] = mod_list['givenName'] + " " + mod_list['sn']
 		mod_list['uid'] = mod_list['cn']
 		mod_list['mail'] = raw_input('Mail? ')
+		userPassword = utils.randomString()
+		mod_list['userPassword'] = utils.makeSecret(userPassword)
 
 		is_posix = raw_input('PosixAccount? (y/n) ')
 		if is_posix == 'y':
@@ -34,11 +37,12 @@ class MyAccount(object):
 			mod_list['objectClass'].append('ldapPublicKey')
 			prigroup = raw_input('Primary Group? ')
 			mod_list['gidNumber'] = gr.search_by_name(prigroup)[1]['gidNumber'][0]
-			mod_list['uidNumber'] = raw_input('uidNumber? ')
+			mod_list['uidNumber'] = utils.GetMaxUidNumber()
+			print("uidNumber: %s" % mod_list['uidNumber'])
 			mod_list['homeDirectory'] = '/home/' + uname
 			mod_list['loginShell'] = '/bin/bash'
 			mod_list['sshPublicKey'] = str(raw_input('Publickey? '))
-		
+
 		"""
 		
 		TODO: determine user DN here
@@ -46,11 +50,17 @@ class MyAccount(object):
 		"""
 		
 		userdn = ""
+
 		try:
 			ld.ld.add_s(userdn, modlist.addModlist(mod_list))
 			if is_posix == 'y':
 				cls.add_to_group(uname, [prigroup])
-			print("Added account %s successfully." % uname)
+				utils.IncreaseMaxUidNumber()
+			print("Created account %s successfully." % uname)
+			#utils.sendMail(mod_list['mail'], "Username = %s\nPassword = %s" % (mod_list['cn'], userPassword))
+			utils.sendMail(content="Username = %s\nPassword = %s" % (mod_list['cn'], userPassword))
+			print("Username: %s" % mod_list['cn'])
+			print("Password: %s" % userPassword)
 		except Exception, e:
 			print(e)
 
@@ -113,7 +123,8 @@ class MyAccount(object):
 
 				prigroup = raw_input('Primary Group? ')
 				newlist['gidNumber'] = gr.search_by_name(prigroup)[1]['gidNumber'][0]
-				newlist['uidNumber'] = raw_input('uidNumber? ')
+				newlist['uidNumber'] = utils.GetMaxUidNumber()
+				print("uidNumber: %s" % newlist['uidNumber'])
 				newlist['homeDirectory'] = '/home/' + cn
 				newlist['loginShell'] = '/bin/bash'
 				newlist['sshPublicKey'] = str(raw_input('Publickey? '))
@@ -122,6 +133,7 @@ class MyAccount(object):
 					ld.ld.modify_s(userdn, modlist.modifyModlist(oldlist, newlist))
 					print("Update account %s successfully" % cn)
 					cls.add_to_group(cn, [prigroup])
+					utils.IncreaseMaxUidNumber()
 				except Exception, e:
 					print(e)
 			else:
@@ -151,6 +163,33 @@ class MyAccount(object):
 		try:
 			ld.ld.modify_s(userdn, modlist.modifyModlist(oldlist, newlist))
 			print("Update attribute %s successfully" % attr)
+		except Exception, e:
+			print(e)
+
+	@staticmethod
+	def reset_password(cn):
+		"""
+		Reset user password
+		:param cn: username (cn) to modify
+		:return: Successfully or Error
+		"""
+		newpass = utils.randomString()
+		searchfilter = "(cn=%s)" % cn
+		result = ld.ldap_search(searchfilter)
+		userdn = result[0][0][0]
+		if 'userPassword' not in result[0][0][1].keys():
+			result[0][0][1]['userPassword'] = []
+		oldattr = result[0][0][1]['userPassword']
+		newattr = []
+		newattr.append(utils.makeSecret(newpass))
+		oldlist = {}
+		newlist = {}
+		oldlist['userPassword'] = oldattr
+		newlist['userPassword'] = newattr
+		try:
+			ld.ld.modify_s(userdn, modlist.modifyModlist(oldlist, newlist))
+			print("Password has been reset.")
+			print("New password is %s" % newpass)
 		except Exception, e:
 			print(e)
 
